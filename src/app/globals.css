@@ -15,6 +15,13 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+button,
+a,
+[role="button"] {
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
 html, body {
   background-color: var(--bg-main);
   color: var(--text-main);

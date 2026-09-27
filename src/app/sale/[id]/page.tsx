@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import ProductDetailScreen from '@/features/sale/ProductDetailScreen';
 import { getSaleProductById, getSaleProducts } from '@/features/sale/data';
@@ -18,5 +19,9 @@ export default async function SaleProductPage({ params }: PageProps) {
     notFound();
   }
 
-  return <ProductDetailScreen product={product} />;
+  return (
+    <Suspense fallback={null}>
+      <ProductDetailScreen product={product} />
+    </Suspense>
+  );
 }

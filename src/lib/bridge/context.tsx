@@ -20,6 +20,7 @@ interface RNBridgeContextType {
   user: UserContextData;
   safeAreaInsets: SafeAreaInsets;
   recentBridgeEvents: RNOutgoingMessage[];
+  recentNativeEvents: RNIncomingMessage[];
   // Bridge Actions
   navigateToNative: (screen: string, params?: Record<string, unknown>) => void;
   openProductDetail: (productId: string, metadata?: Record<string, unknown>) => void;
@@ -44,6 +45,7 @@ export function RNBridgeProvider({ children }: { children: ReactNode }) {
     right: 0,
   });
   const [recentBridgeEvents, setRecentBridgeEvents] = useState<RNOutgoingMessage[]>([]);
+  const [recentNativeEvents, setRecentNativeEvents] = useState<RNIncomingMessage[]>([]);
 
   useEffect(() => {
     setIsWebView(isReactNativeWebView());
@@ -85,6 +87,11 @@ export function RNBridgeProvider({ children }: { children: ReactNode }) {
 
     // Listen for incoming messages from React Native host
     const unsubscribe = subscribeToRNMessages((msg: RNIncomingMessage) => {
+      queueMicrotask(() => {
+        setRecentNativeEvents((prev) => [msg, ...prev.slice(0, 29)]);
+      });
+      console.log('[RN ➔ Bridge]', JSON.stringify(msg));
+
       if (msg.type === 'SET_USER_DATA') {
         setUser((prev) => ({ ...prev, ...(msg.payload as UserContextData) }));
       } else if (msg.type === 'SAFE_AREA_UPDATE') {
@@ -159,6 +166,7 @@ export function RNBridgeProvider({ children }: { children: ReactNode }) {
         user,
         safeAreaInsets,
         recentBridgeEvents,
+        recentNativeEvents,
         navigateToNative,
         openProductDetail,
         addToCart,

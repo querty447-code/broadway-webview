@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useRNBridge } from '@/lib/bridge';
 import { formatPrice } from './format';
 import type { SaleProduct } from './types';
@@ -11,11 +12,14 @@ type ProductDetailScreenProps = {
 
 export default function ProductDetailScreen({ product }: ProductDetailScreenProps) {
   const { addToCart } = useRNBridge();
+  const searchParams = useSearchParams();
+  const query = searchParams.toString();
+  const backHref = query ? `/sale?${query}` : '/sale';
 
   return (
     <div className="flex flex-1 flex-col">
       <header className="flex items-center gap-3 px-4 pb-3 pt-5">
-        <Link href="/sale" className="text-sm font-medium text-[var(--primary)]">
+        <Link href={backHref} className="text-sm font-medium text-[var(--primary)]">
           Back
         </Link>
       </header>

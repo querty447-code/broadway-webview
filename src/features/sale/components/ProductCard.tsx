@@ -1,7 +1,8 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { isReactNativeWebView, useRNBridge } from "@/lib/bridge";
 import { formatPrice } from "../format";
 import type { SaleProduct } from "../types";
@@ -10,26 +11,40 @@ type ProductCardProps = {
   product: SaleProduct;
 };
 
+function isNativeHost() {
+  if (typeof window === "undefined") return false;
+  if (isReactNativeWebView()) return true;
+  return new URLSearchParams(window.location.search).get("rn") === "true";
+}
+
 export function ProductCard({ product }: ProductCardProps) {
   const router = useRouter();
-  const { openProductDetail, addToCart } = useRNBridge();
-  const href = `/sale/${product.id}`;
-
-  function handleOpenProduct(event: React.MouseEvent<HTMLAnchorElement>) {
-    if (!isReactNativeWebView()) return;
-
-    event.preventDefault();
-    openProductDetail(product.id, { title: product.title, price: product.price });
-  }
+  const searchParams = useSearchParams();
+  const { addToCart } = useRNBridge();
+  const query = searchParams.toString();
+  const href = query ? `/sale/${product.id}?${query}` : `/sale/${product.id}`;
+  const lastAddAt = useRef(0);
 
   function handleAddToCart() {
-    if (isReactNativeWebView()) {
-      addToCart({
-        id: product.id,
-        title: product.title,
-        price: product.price,
-        quantity: 1,
-      });
+    const now = Date.now();
+    if (now - lastAddAt.current < 400) return;
+    lastAddAt.current = now;
+
+    const item = {
+      id: product.id,
+      title: product.title,
+      price: product.price,
+      quantity: 1,
+    };
+
+    window.dispatchEvent(
+      new CustomEvent("sale-debug-click", {
+        detail: { action: "ADD_TO_CART", inWebView: isNativeHost(), item, at: now },
+      }),
+    );
+
+    if (isNativeHost()) {
+      addToCart(item);
       return;
     }
 
@@ -40,8 +55,7 @@ export function ProductCard({ product }: ProductCardProps) {
     <article className="flex flex-col overflow-hidden rounded-2xl bg-[var(--bg-card)]">
       <Link
         href={href}
-        className="relative aspect-[4/5] w-full overflow-hidden text-left"
-        onClick={handleOpenProduct}
+        className="relative aspect-[4/5] w-full cursor-pointer overflow-hidden text-left"
         aria-label={`View ${product.title}`}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -55,21 +69,18 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
           {product.category}
         </p>
-        <h2 className="line-clamp-2 text-sm font-medium text-[var(--text-main)]">
-          {product.title}
-        </h2>
+        <h2 className="line-clamp-2 text-sm font-medium text-[var(--text-main)]">{product.title}</h2>
         <div className="mt-auto flex items-baseline gap-2">
-          <span className="text-sm font-semibold text-[var(--text-main)]">
-            {formatPrice(product.price)}
-          </span>
+          <span className="text-sm font-semibold text-[var(--text-main)]">{formatPrice(product.price)}</span>
           <span className="text-xs text-[var(--text-muted)] line-through">
             {formatPrice(product.originalPrice)}
           </span>
         </div>
         <button
           type="button"
-          className="mt-1 rounded-xl bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white active:opacity-80"
+          className="mt-1 cursor-pointer rounded-xl bg-[var(--primary)] px-3 py-2 text-sm font-semibold text-white active:opacity-80"
           onClick={handleAddToCart}
+          onPointerUp={handleAddToCart}
         >
           Add to cart
         </button>
