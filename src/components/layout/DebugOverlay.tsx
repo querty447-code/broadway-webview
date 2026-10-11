@@ -26,8 +26,13 @@ export function DebugOverlay({ requestHeaders }: DebugOverlayProps) {
   const { isWebView, recentBridgeEvents, recentNativeEvents } = useRNBridge();
   const [open, setOpen] = useState(true);
   const [taps, setTaps] = useState<SaleDebugClick[]>([]);
+  const [hasRnObject, setHasRnObject] = useState(false);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
+    setReady(true);
+    setHasRnObject(isReactNativeWebView());
+
     const handleClick = (event: Event) => {
       const detail = (event as CustomEvent<SaleDebugClick>).detail;
       if (detail) setTaps((prev) => [detail, ...prev.slice(0, 19)]);
@@ -82,8 +87,8 @@ export function DebugOverlay({ requestHeaders }: DebugOverlayProps) {
         {open && (
           <div className="max-h-[45vh] space-y-3 overflow-y-auto border-t border-amber-400/30 px-3 py-3 text-[11px] leading-4">
             <p className="text-amber-200/90">
-              Host: {isWebView ? 'WebView hook yes' : 'WebView hook no'} · RN object:{' '}
-              {isReactNativeWebView() ? 'yes' : 'no'}
+              Host: {ready && isWebView ? 'WebView hook yes' : 'WebView hook no'} · RN object:{' '}
+              {ready && hasRnObject ? 'yes' : 'no'}
             </p>
 
             <div>

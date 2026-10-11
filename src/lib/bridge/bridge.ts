@@ -1,12 +1,8 @@
-'use client';
+"use client";
 
-import {
-  RNOutgoingMessageType,
-  RNOutgoingMessage,
-  RNIncomingMessage,
-  HapticStyle,
-} from '@/types';
+import { RNOutgoingMessageType, RNOutgoingMessage, RNIncomingMessage, HapticStyle } from "@/types";
 
+// This is a workaround to fix the type error for the ReactNativeWebView object.
 declare global {
   interface Window {
     ReactNativeWebView?: {
@@ -22,7 +18,7 @@ const listeners = new Set<BridgeListener>();
  * Checks whether the webpage is running inside React Native WebView
  */
 export function isReactNativeWebView(): boolean {
-  return typeof window !== 'undefined' && Boolean(window.ReactNativeWebView?.postMessage);
+  return typeof window !== "undefined" && Boolean(window.ReactNativeWebView?.postMessage);
 }
 
 function postMessageToNative(serialized: string): boolean {
@@ -32,7 +28,7 @@ function postMessageToNative(serialized: string): boolean {
       return true;
     }
   } catch (err) {
-    console.error('[RN Bridge] Failed to send message to React Native:', err);
+    console.error("[RN Bridge] Failed to send message to React Native:", err);
   }
   return false;
 }
@@ -42,7 +38,7 @@ function postMessageToNative(serialized: string): boolean {
  * Retries briefly because RN injects `window.ReactNativeWebView` after first JS.
  */
 export function sendToReactNative<T = unknown>(type: RNOutgoingMessageType, payload?: T): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   const message: RNOutgoingMessage<T | undefined> = {
     type,
@@ -51,6 +47,8 @@ export function sendToReactNative<T = unknown>(type: RNOutgoingMessageType, payl
   };
   const serialized = JSON.stringify(message);
 
+  // If the message is not sent to the native side, try to send it again.
+  // This is a workaround to fix the issue that the message is not sent to the native side.
   if (!postMessageToNative(serialized)) {
     let attempts = 0;
     const timer = window.setInterval(() => {
@@ -58,19 +56,26 @@ export function sendToReactNative<T = unknown>(type: RNOutgoingMessageType, payl
       if (postMessageToNative(serialized) || attempts >= 20) {
         window.clearInterval(timer);
         if (attempts >= 20 && !window.ReactNativeWebView) {
-          console.warn('[RN Bridge] ReactNativeWebView not found. Browser console logs will not appear in Metro.');
+          console.warn(
+            "[RN Bridge] ReactNativeWebView not found. Browser console logs will not appear in Metro.",
+          );
         }
       }
     }, 50);
   }
 
   window.dispatchEvent(
-    new CustomEvent('rn-bridge-message-sent', {
+    new CustomEvent("rn-bridge-message-sent", {
       detail: message,
-    })
+    }),
   );
 
-  console.log(`%c[Bridge ➔ RN] %c${type}`, 'color: #8B5CF6; font-weight: bold;', 'color: #10B981;', payload);
+  console.log(
+    `%c[Bridge ➔ RN] %c${type}`,
+    "color: #8B5CF6; font-weight: bold;",
+    "color: #10B981;",
+    payload,
+  );
 }
 
 /**
@@ -79,13 +84,13 @@ export function sendToReactNative<T = unknown>(type: RNOutgoingMessageType, payl
 export function subscribeToRNMessages(listener: BridgeListener): () => void {
   listeners.add(listener);
 
-  if (typeof window !== 'undefined' && !(window as { __rnBridgeInit?: boolean }).__rnBridgeInit) {
+  if (typeof window !== "undefined" && !(window as { __rnBridgeInit?: boolean }).__rnBridgeInit) {
     (window as { __rnBridgeInit?: boolean }).__rnBridgeInit = true;
 
     const handleMessage = (event: MessageEvent) => {
       try {
         let data: unknown = event.data;
-        if (typeof data === 'string') {
+        if (typeof data === "string") {
           try {
             data = JSON.parse(data);
           } catch {
@@ -93,23 +98,23 @@ export function subscribeToRNMessages(listener: BridgeListener): () => void {
           }
         }
 
-        if (data && typeof data === 'object' && 'type' in data) {
+        if (data && typeof data === "object" && "type" in data) {
           const typedMessage = data as RNIncomingMessage;
           listeners.forEach((cb) => {
             try {
               cb(typedMessage);
             } catch (err) {
-              console.error('[RN Bridge] Listener error:', err);
+              console.error("[RN Bridge] Listener error:", err);
             }
           });
         }
       } catch (err) {
-        console.error('[RN Bridge] Parse error:', err);
+        console.error("[RN Bridge] Parse error:", err);
       }
     };
 
-    window.addEventListener('message', handleMessage);
-    document.addEventListener('message', handleMessage as EventListener);
+    window.addEventListener("message", handleMessage);
+    document.addEventListener("message", handleMessage as EventListener);
   }
 
   return () => {
@@ -120,6 +125,6 @@ export function subscribeToRNMessages(listener: BridgeListener): () => void {
 /**
  * Helper to trigger native device haptics
  */
-export function triggerHaptic(style: HapticStyle = 'light'): void {
-  sendToReactNative('TRIGGER_HAPTIC', { style });
+export function triggerHaptic(style: HapticStyle = "light"): void {
+  sendToReactNative("TRIGGER_HAPTIC", { style });
 }

@@ -69,9 +69,13 @@ export function ProductCard({ product }: ProductCardProps) {
         <p className="text-[11px] uppercase tracking-wide text-[var(--text-muted)]">
           {product.category}
         </p>
-        <h2 className="line-clamp-2 text-sm font-medium text-[var(--text-main)]">{product.title}</h2>
+        <h2 className="line-clamp-2 text-sm font-medium text-[var(--text-main)]">
+          {product.title}
+        </h2>
         <div className="mt-auto flex items-baseline gap-2">
-          <span className="text-sm font-semibold text-[var(--text-main)]">{formatPrice(product.price)}</span>
+          <span className="text-sm font-semibold text-[var(--text-main)]">
+            {formatPrice(product.price)}
+          </span>
           <span className="text-xs text-[var(--text-muted)] line-through">
             {formatPrice(product.originalPrice)}
           </span>

@@ -343,3 +343,10 @@ Do not add `services/deals.service.ts` or `types/models.ts` for a single screen.
 | `/search` | `app/search/page.tsx` | `features/search` |
 | `/terms` | `app/terms/page.tsx` | `features/terms` |
 | `/about` | `app/about/page.tsx` | `features/about` |
+
+---
+
+## Related docs
+
+- [Web ↔ App bridge (FE team)](./fe-web-app-bridge.md) — handshake, `useRNBridge`, token/session, payload shapes, safe area, local build
+- [React Native WebView integration](./react-native.md) — native `WebView` setup and `onMessage` handlers
